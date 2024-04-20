@@ -157,10 +157,14 @@ const noteHandler = {
 };
 
 // note-related event handlers
-document.getElementById('new-note-btn').addEventListener('click', () => {
-    noteHandler.editMode = 1;
-    noteHandler.openNoteEditor();
+document.addEventListener('DOMContentLoaded', function() {
+    // Your code here
+    document.getElementById('new-note-btn').addEventListener('click', () => {
+        noteHandler.editMode = 1;
+        noteHandler.openNoteEditor();
+    });
 });
+
 
 document.getElementById('discard-note-btn').addEventListener('click', () => {
     noteHandler.closeNoteEditor();
