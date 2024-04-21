@@ -1,258 +1,257 @@
-"use strict";
+window.onload = function() {
+  loadStartEvents();
 
-// initialize and read previously created notes and groups
-window.addEventListener("load", function() {  
-    document.getElementById("move-to-all").addEventListener("click", function() {
-        moveToFolder("0000folder");
-    });
+  function loadStartEvents() {
+    const howItWorksBtn = document.querySelector("#how-it-works-btn");
+    const deleteAllBtn = document.querySelector("#deleteAll");
+    const createFirstSticky = document.querySelector("#createStickyBtn"); //for first empty existing sticky only
 
-    if(localStorage.getItem("0000folder") === null)
-        localStorage.setItem("0000folder", "_folderName:AllItems_folders:0_notes:0");
+    document.onmouseup = hideDropMenu; //hides color menus when clicked anywhere in the page
+    howItWorksBtn.onclick = toggleHowItWorks; //toggles how it works menu
+    deleteAllBtn.onclick = deleteAllStickies; //deletes all stickies from dom and storage
+    createFirstSticky.onclick = createId; //creates the first sticky, and hides the initial add button
 
-    const allStorageValue = readStorage("0000folder");
-    document.getElementById("all-notes-count").innerHTML = 
-    `${Number(allStorageValue.notes)} Notes |`;
-    document.getElementById("all-folders-count").innerHTML = 
-    `${Number(allStorageValue.folders)} Groups`;
+    let isStorageEmpty = getStoredStickies(createFirstSticky); //retrieves data from local storage, and recreates stored stikies
+  }
 
-    let storageKeys = Object.keys(localStorage);
-    for(let key of storageKeys) {
-        if(!/^[0-9]/.test(key)) continue;
-        const storageValue = readStorage(key);
-        if(key.includes("folder")) {
-            if(localStorage.getItem(key).includes("AllItems")) continue;
-            folderHandler.folderCreator(storageValue.folderName, key, true);
-        } else {
-            noteHandler.noteCreator(storageValue.noteName, null, key, storageValue.index);
-        }
+  function hideDropMenu(e) {
+    //hides color menus when clicked anywhere in the page
+    let stickies = Array.from(document.querySelectorAll(".sticky"));
+    let stickiesIdArray = stickies.map(el => el.id).filter(el => el); //get array of all sticky ids, if they exist
+
+    for (let i = 0; i < stickiesIdArray.length; i++) {
+      let dropContent = document.querySelector(
+        `#${stickiesIdArray[i]} .dropdown-content-hide`
+      );
+      let dropButton = document.querySelector(
+        `#${stickiesIdArray[i]} .drop-button`
+      );
+      if (dropContent != e.target.parentNode && dropButton != e.target) {
+        dropContent.style.display = "none";
+      }
     }
-});
+  }
 
-// update displayed number of notes
-function noteCounter(num) {
-    const allStorageValue = readStorage("0000folder");
-    document.getElementById("all-notes-count").innerHTML = 
-    `${Number(allStorageValue.notes) + num} Notes |`;
-    localStorage.setItem(
-        "0000folder", 
-        "_folderName:AllItems" + 
-        `_folders:${allStorageValue.folders}` + 
-        `_notes:${Number(allStorageValue.notes) + num}`
+  function toggleHowItWorks() {
+    //toggles how it works menu
+    let howItWorksDiv = document.querySelector("#how-it-works");
+    howItWorksDiv.style.display != "block"
+      ? (howItWorksDiv.style.display = "block")
+      : (howItWorksDiv.style.display = "none");
+  }
+
+  function deleteAllStickies() {
+    //deletes all stickies from dom and storage
+    localStorage.clear(); //clear all from storage
+    let parent = document.querySelector("#main");
+    while (parent.children.length > 2) {
+      //while parent still has 2 children(sticky template+initial create button)
+      parent.removeChild(parent.lastChild); //remove all children from the end
+    }
+    document.querySelector("#createStickyBtn").style.display = "block"; //and show initial create button
+  }
+
+  function getStoredStickies(createFirstSticky) {
+    //retrieves data from local storage, and recreates stored stikies
+    let stickiesArray = getStickiesArray(); //get the stickiesArray from storage, which contains all the keys used by the program
+
+    if (stickiesArray.length > 0) {
+      //if there were items in storage, hide the inital create button
+      createFirstSticky.style.display = "none";
+    } else {
+      createFirstSticky.style.display = "block";
+    }
+
+    for (let i = 0; i < stickiesArray.length; i++) {
+      //using the keys stored in the array, get all the stored sticky objects
+      let key = stickiesArray[i];
+      let stickyObject = JSON.parse(localStorage[key]);
+      addStoredStickiesToDom(stickyObject, key); //call func that handles the creation of elements for the stored objects
+    }
+  }
+
+  function getStickiesArray() {
+    "use strict";
+    let stickiesArray = localStorage.getItem("stickiesArray");
+
+    if (!stickiesArray) {
+      //if no item in storage yet, returns null
+      stickiesArray = []; //so i create an new empty array
+      localStorage.setItem("stickiesArray", JSON.stringify(stickiesArray)); //and I store a new key stickiesArray that has as value a JSON string array copy of stickiesArray
+    } else {
+      stickiesArray = JSON.parse(stickiesArray); //else we found an array of keys, and we parse it to get an actual array
+    }
+    return stickiesArray; //which we return to the calling stack
+  }
+
+  function addStoredStickiesToDom(stickyObject, key) {
+    // handles the creation of elements for the stored objects
+    let stickyClone = setIdToStoredObjects(key); //asks for dom sticky to be created and sets their key as id
+    Array.from(stickyClone.children).filter(
+      el => el.className == "sticky-content"
+    )[0].value =
+      stickyObject.value; //adds stored value to new element
+    stickyClone.style.backgroundImage = stickyObject.color; //adds stored color to new element
+  }
+
+  function setIdToStoredObjects(key) {
+    //asks for dom sticky to be created and sets their key as id
+    let stickyClone = createSticky(); //create actual dom sticky
+    if (key) {
+      stickyClone.setAttribute("id", key); //for all the already stored items, set ID=stored key. else no id new sticky is created
+    }
+    return stickyClone; //returns created element to calling stack
+  }
+
+  function createSticky() {
+    let parent = document.querySelector("#main");
+    let sticky = document.querySelector(".sticky");
+    let stickyClone = sticky.cloneNode(true); //creates a clone from sticky div template
+    parent.appendChild(stickyClone);
+    stickyClone.style.display = "block";
+
+    let newAddBtn = Array.from(
+      Array.from(stickyClone.children).filter(
+        el => el.className == "sticky-header"
+      )[0].children
+    ).filter(el => el.classList.contains("add-button"))[0];
+    newAddBtn.onclick = createId; //adds createID handler to new dom sticky
+
+    let removeBtn = Array.from(
+      Array.from(stickyClone.children).filter(
+        el => el.className == "sticky-header"
+      )[0].children
+    ).filter(el => el.classList.contains("remove-button"))[0];
+    removeBtn.onclick = deleteSticky; //adds delete sticky handler to new dom sticky
+
+    let dropBtn = Array.from(
+      Array.from(stickyClone.children).filter(
+        el => el.className == "sticky-header"
+      )[0].children
+    ).filter(el => el.classList.contains("drop-button"))[0];
+    dropBtn.onclick = toggleDropMenuClick; //adds color dropdown toggle handler to new dom sticky
+
+    let dropMenus = Array.from(
+      document.querySelectorAll(".dropdown-content-hide")
     );
-} 
+    for (let dropMenu of dropMenus) {
+      dropMenu.onclick = changeColor; //adds changeColor handler to color dropdown menu
+    }
 
-// update displayed number of groups
-function folderCounter(num) {
-    const allStorageValue = readStorage("0000folder");
-    document.getElementById("all-folders-count").innerHTML = 
-    `${Number(allStorageValue.folders) + num} Groups`;
-    localStorage.setItem(
-        "0000folder", 
-        "_folderName:AllItems" + 
-        `_folders:${Number(allStorageValue.folders) + num}` + 
-        `_notes:${allStorageValue.notes}`
+    let stickyCloneContent = Array.from(stickyClone.children).filter(
+      el => el.className == "sticky-content"
+    )[0];
+    stickyCloneContent.value = ""; //new clone has no text on creation
+
+    stickyCloneContent.onchange = storeSticky; //when sticky text is changed, save content to storage
+    stickyCloneContent.oninput = notSavedNotification; //when new text is being writtern, show not saved notification
+
+    return stickyClone;
+  }
+
+  function createId(e) {
+    //creates unique IDs for dom sticky
+    if (e.target.id == "createStickyBtn") {
+      //if triggered by first button, then hide that button
+      e.target.style.display = "none";
+    }
+
+    let currentDate = new Date();
+    let key = "sticky_" + currentDate.getTime();
+
+    let stickyClone = createSticky();
+    stickyClone.setAttribute("id", key);
+  }
+
+  function deleteSticky(e) {
+    const createFirstSticky = document.querySelector("#createStickyBtn");
+    const main = document.querySelector("#main");
+    let key = e.target.parentNode.parentNode.id; //using sticky id as key for storage removal
+
+    localStorage.removeItem(key); //remove key from storage
+
+    let stickiesArray = getStickiesArray(); //remove key from stikie array
+    if (stickiesArray) {
+      for (let i = 0; i < stickiesArray.length; i++) {
+        if (key == stickiesArray[i]) {
+          stickiesArray.splice(i, 1);
+        }
+      }
+      localStorage.setItem("stickiesArray", JSON.stringify(stickiesArray));
+    }
+
+    removeStickyFromDOM(key); //remove sticky from dom
+
+    if (stickiesArray.length > 0 || main.children.length > 2) {
+      //show createFirst button
+      createFirstSticky.style.display = "none";
+    } else {
+      createFirstSticky.style.display = "block";
+    }
+  }
+
+  function removeStickyFromDOM(key) {
+    var sticky = document.getElementById(key);
+    sticky.parentNode.removeChild(sticky);
+  }
+
+  function toggleDropMenuClick(e) {
+    //toggle color menu on click
+    let parentId = e.target.parentNode.parentNode.id;
+    let stickyContent = document.querySelector(`#${parentId} .sticky-content`);
+    let dropMenu = document.querySelector(
+      `#${parentId} .dropdown-content-hide`
     );
-} 
+    dropMenu.style.display != "flex"
+      ? (dropMenu.style.display = "flex")
+      : (dropMenu.style.display = "none");
+  }
 
-// note-related functionalities
-const noteHandler = {
-    noteEditor : document.getElementById("edit-area-container"),
-    newNoteTitle : document.getElementById("new-note-name"),
-    newNoteText : document.getElementById("new-note-text"),
-    notes : {},
-    toMoveItemKey : null,
-    toEditItemKey : null,
-    editMode : 0, // initialize mode(0), create mode(1), edit mode(2) 
+  function changeColor(e) {
+    let colorBtn = e.target;
+    let sticky = e.target.parentNode.parentNode.parentNode;
+    let key = sticky.id;
+    let newColor = getComputedStyle(colorBtn).backgroundImage;
+    let stickyObject = JSON.parse(localStorage.getItem(key));
 
-    openNoteEditor() {
-        folderHandler.closeFolderCreate();
-        folderHandler.closeMove();
-        this.noteEditor.style.transform = "scale(1) translate(-50%, 0)";
-    },
-
-    closeNoteEditor() {
-        this.noteEditor.style.transform = "scale(0) translate(-50%, 0)";
-        this.newNoteTitle.placeholder = "Title";
-        this.newNoteTitle.value = "";
-        this.newNoteText.value = "";
-    },
-    
-    delNote(noteDiv, noteIndex,noteMemKey) {
-        event.stopPropagation();
-        noteCounter(-1);
-        noteDiv.remove();
-        delete this.notes[noteIndex];
-        localStorage.removeItem(noteMemKey);
-    },
-
-    // initialize moving note to group
-    toMove(noteMemKey) {
-        event.stopPropagation();
-        this.closeNoteEditor();
-        folderHandler.closeFolderCreate();
-        this.toMoveItemKey = noteMemKey;
-        folderHandler.folderMoveParent.style.transform = "scale(1) translate(-50%, 0)";
-    },
-
-    // note edit and create function
-    noteCreator(noteName, noteText, prevKey, prevIndex) {
-        if(noteName === "") {
-            this.newNoteTitle.placeholder = "Title can't be empty!";
-            return undefined;
-        }
-
-        // when editing an existing note
-        if(this.editMode == 2) {
-            const storageValue = readStorage(this.toEditItemKey);
-            writeStorage.note(
-                this.toEditItemKey,
-                storageValue.index,
-                noteName,
-                noteText,
-                storageValue.Fldr
-                );
-            this.notes[storageValue.index].childNodes[1].innerHTML = noteName;
-            this.closeNoteEditor();
-            return undefined;
-        }
-    
-        let index;
-        let k;
-        if(this.editMode == 1) {
-            let d = new Date();
-            k = d.getTime();
-            index = "note" + Object.keys(this.notes).length;
-            writeStorage.note(k, index, noteName, noteText, "AllItems");
-
-            noteCounter(1);
-        } else {
-            k = prevKey;
-            index = prevIndex;
-        }
-
-        // create note DOM element
-        let noteContainer = document.createElement("div");
-        noteContainer.setAttribute("class", "note");
-        noteContainer.innerHTML = 
-        `<span class="material-symbols-outlined item-type-icon">description</span>` +
-        `<span class="note-title">${noteName}</span>` + 
-        `<span class="material-symbols-outlined del-icon">delete</span>`;
-        
-        // note item click event
-        noteContainer.addEventListener("click", function() {
-            noteHandler.openNoteEditor();
-            noteHandler.editMode = 2;
-            noteHandler.toEditItemKey = k;
-            noteHandler.newNoteTitle.value = noteName;
-            noteHandler.newNoteText.value = noteText;
-        });
-
-        // delete icon click event
-        noteContainer.childNodes[2].addEventListener("click", function() {
-            noteHandler.delNote(noteContainer, index, k);
-        });
-
-        document.getElementById("notes-group").appendChild(noteContainer);
-        this.notes[index] = noteContainer;
+    sticky.style.backgroundImage = newColor;
+    if (stickyObject) {
+      stickyObject.color = newColor;
+      localStorage.setItem(key, JSON.stringify(stickyObject));
     }
-};
+  }
 
-// folder-related functionalities
-const folderHandler = {
-    newFolderInput : document.getElementById("new-folder-name"),
-    folderEditor : document.getElementById("folder-edit-container"),
-    folders : {},
-    folderMoveParent : document.getElementById("move-container"),
+  function storeSticky(e) {
+    let stickiesArray = getStickiesArray(); //get array of keys from storage, and add new keys to it
+    let sticky = e.target.parentNode;
 
-    folderCreator(folderName, prevKey, isLoad) {
-        if(folderName === "") {
-            this.newFolderInput.placeholder = "Title can't be empty!";
-            return undefined;
-        }
-        
-        let k;
-        let index;
-        if(!isLoad) {
-            let d = new Date();
-            k = d.getTime();
-            index = "folder" + Object.keys(this.folders).length;
-            writeStorage.folder(k, index, folderName);
-        } else {
-            k = prevKey;
-            index = prevKey;
-        }
+    let key = sticky.id; //for all items, set as key their ID
+    let stickyContent = e.target.value;
 
-        // create folder DOM element
-        let folderContainer = document.createElement("div");
-        folderContainer.setAttribute("class", "group");
-        folderContainer.innerHTML = 
-        `<span class="material-symbols-outlined item-type-icon">folder</span>` +
-        `<span class="folder-title">${folderName}</span>` +
-        `<span class="material-symbols-outlined del-icon">delete</span>`;
-        
-        // folder item click event
-        folderContainer.addEventListener("click", function() {
-            folderHandler.openFolderCreate();
-        });
+    let oldColor = getComputedStyle(sticky).backgroundImage;
+    let stickyObject = {
+      value: stickyContent,
+      color: oldColor
+    };
 
-        // delete icon click event
-        folderContainer.childNodes[2].addEventListener("click", function() {
-            folderHandler.delFolder(folderContainer, index, k);
-        });
+    localStorage.setItem(key, JSON.stringify(stickyObject)); //store textarea value+color in localstorage
 
-        document.getElementById("notes-group").appendChild(folderContainer);
-        this.folders[index] = folderContainer;
-    },
-
-    // close folder editor
-    closeFolderCreate() {
-        this.folderEditor.style.transform = "scale(0) translate(-50%, 0)";
-        this.newFolderInput.value = "";
-    },
-
-    // open folder editor
-    openFolderCreate() {
-        noteHandler.closeNoteEditor();
-        folderHandler.closeMove();
-        this.folderEditor.style.transform = "scale(1) translate(-50%, 0)";
-    },
-
-    // close move note to folder editor
-    closeMove() {
-        this.folderMoveParent.style.transform = "scale(0) translate(-50%, 0)";
-    },
-
-    // folder delete function
-    delFolder(folderDiv, folderIndex, folderMemKey) {
-        event.stopPropagation();
-        folderCounter(-1);
-        folderDiv.remove();
-        delete this.folders[folderIndex];
-        localStorage.removeItem(folderMemKey);
+    if (!stickiesArray.includes(key)) {
+      stickiesArray.push(key); //and save this key/id to the stickie array, if it doesn't already exist
+      localStorage.setItem("stickiesArray", JSON.stringify(stickiesArray)); //store the new array key items int he stickiesarray
     }
-};
 
-// read storage data
-function readStorage(key) {
-    let obj = localStorage.getItem(key);
-    obj = obj.substring(11);
-    const folders = Number(obj.substring(0, obj.indexOf("_notes:")));
-    const notes = Number(obj.substring(obj.lastIndexOf(":") + 1));
-    const folderName = obj.substring(obj.indexOf("_folderName:") + 12, obj.indexOf("_folders:"));
-    return { folders, notes, folderName };
-}
+    let notSaved = document.querySelector(`#${key} .notSaved`);
+    notSaved.style.display = "inline-block";
+    notSaved.style.color = "black";
+    notSaved.title = "saved";
+  }
 
-// write storage data
-const writeStorage = {
-    folder(key, index, folderName) {
-        localStorage.setItem(key, `_folderName:${folderName}_folders:0_notes:0`);
-        localStorage.setItem("0000folder", `_folderName:AllItems_folders:${Object.keys(folderHandler.folders).length}_notes:${Object.keys(noteHandler.notes).length}`);
-        folderHandler.folderCreator(folderName, key, false);
-    },
-
-    note(key, index, noteName, noteText, folder) {
-        localStorage.setItem(key, `_noteName:${noteName}_noteText:${noteText}_folder:${folder}`);
-        localStorage.setItem("0000folder", `_folderName:AllItems_folders:${Object.keys(folderHandler.folders).length}_notes:${Object.keys(noteHandler.notes).length}`);
-        noteHandler.noteCreator(noteName, noteText, key, index);
-    }
+  function notSavedNotification(e) {
+    let stickyId = e.target.parentNode.id;
+    let notSaved = document.querySelector(`#${stickyId} .notSaved`);
+    notSaved.style.display = "inline-block";
+    notSaved.style.color = "red";
+    notSaved.title = "not saved";
+  }
 };
