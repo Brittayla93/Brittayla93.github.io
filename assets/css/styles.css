@@ -1,3 +1,9 @@
+.container.d-flex.flex-column.flex-wrap {
+    position: fixed;
+    top: 2px;
+    right: 10vw;
+}
+
 h1 {
   font-family: 'Roboto Flex';
   font-size: 25px;
