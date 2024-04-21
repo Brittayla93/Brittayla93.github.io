@@ -18,41 +18,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h1 style="font-size: 24.5px;">Other</h1>
-           
-  <div class="container" ng-app="notesApp">  
-    <div ng-controller="notesController" id="appContainer">
-      <h3>Notes:</h3>  
-    <div class="notesForm">
-      <form name="notesForm" ng-submit="addNote()">
-        <input type="text" name="newnote" ng-model="newNote" placeholder="Enter your notes here ..." required />
-        <button type="submit" class="form-button" ng-disabled="notesForm.$invalid">Add Note</button>        
-      </form>       
-        
-      <div class="noteslist">
-          <span>You have {{notes.length}} Notes</span>
-          <ul>
-            <li ng-repeat="note in notes">            
-              <div class="each-note note-$index">
-                <div ng-show="!editing"> 
-                  <label><input type="checkbox" ng-model="note.selected" class="note-check"/>
-                  <div ng-class="{'selected-note':note.selected}" class="note-text">{{note.text}}</div></label> 
-                </div>
-                      <div ng-show="editing">
-                        <input type="text" ng-model="editNote" class="note-text"> 
-                        <i class="material-icons hidenEdit" ng-click="note.text = editNote; editing = false;">edit</i>
-                      </div>
-           
-                <span ng-hide="editing" class="icon" >
-                  <i class="material-icons" ng-click="editNote = note.text; editing = true;">edit</i>
-                  <i class="material-icons" ng-click="removeNote($index)">delete</i>
-                </span>             
-              </div>                      
-            </li>
-          </ul>         
-          <button class="app-button" ng-click="removeSelectedNote()">Remove Selected</button>
-          <button class="app-button" ng-click="saveNotes()">Save Notes</button>
-      </div>
-    </div>
+           <iframe src="https://keep.google.com/u/0/#reminders" height="389" style="border:0;overflow:hidden;width:40%" loading="lazy"></iframe>    </div>
   </div>
 </div>
             </div>
