@@ -21,6 +21,12 @@ h1 {
   font-family:'Roboto Flex', 
   'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
+
+.d-flex {
+  background-image: url('https://brittayla93.github.io/assets/images/gradient.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
 body {
   
   height: 100%;
