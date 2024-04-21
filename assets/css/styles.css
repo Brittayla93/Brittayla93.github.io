@@ -22,9 +22,7 @@ h1 {
   'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 body {
-  background-image: url('https://brittayla93.github.io/assets/images/gradient.jpg');
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  
   height: 100%;
   color: var(--font_color);
 }
