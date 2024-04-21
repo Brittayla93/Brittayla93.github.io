@@ -11,9 +11,6 @@
     <script src="assets/js/notes.js"> </script>
     <link rel="stylesheet" 
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" type="text/css">
-  <link href="https://fonts.googleapis.com/css?family=Lato|Short+Stack" rel="stylesheet">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 </head>
 
 <body class="d-flex">
@@ -21,26 +18,43 @@
         <div class="row">
             <div class="col-md-12">
                 <h1 style="font-size: 24.5px;">Other</h1>
-               <main id="main">
-    <div class="sticky">
-      <div class="sticky-header">
-        <span class="sticky-header-menu add-button fas fa-plus" title='new sticky'></span>
-        <span class="sticky-header-menu notSaved fas fa-check" title='not saved'></span>
-        <span class="sticky-header-menu drop-button fas fa-paint-brush" title='change color'></span>
-        <div class="dropdown-content-hide">
-          <div class="pink-color"></div>
-          <div class="yellow-color"></div>
-          <div class="green-color"></div>
-          <div class="blue-color"></div>
-          <div class="purple-color"></div>
-        </div>
-        <span class="sticky-header-menu remove-button fas fa-trash-alt" title='delete sticky'></span>
+           
+  <div class="container" ng-app="notesApp">  
+    <div ng-controller="notesController" id="appContainer">
+      <h3>Notes:</h3>  
+    <div class="notesForm">
+      <form name="notesForm" ng-submit="addNote()">
+        <input type="text" name="newnote" ng-model="newNote" placeholder="Enter your notes here ..." required />
+        <button type="submit" class="form-button" ng-disabled="notesForm.$invalid">Add Note</button>        
+      </form>       
+        
+      <div class="noteslist">
+          <span>You have {{notes.length}} Notes</span>
+          <ul>
+            <li ng-repeat="note in notes">            
+              <div class="each-note note-$index">
+                <div ng-show="!editing"> 
+                  <label><input type="checkbox" ng-model="note.selected" class="note-check"/>
+                  <div ng-class="{'selected-note':note.selected}" class="note-text">{{note.text}}</div></label> 
+                </div>
+                      <div ng-show="editing">
+                        <input type="text" ng-model="editNote" class="note-text"> 
+                        <i class="material-icons hidenEdit" ng-click="note.text = editNote; editing = false;">edit</i>
+                      </div>
+           
+                <span ng-hide="editing" class="icon" >
+                  <i class="material-icons" ng-click="editNote = note.text; editing = true;">edit</i>
+                  <i class="material-icons" ng-click="removeNote($index)">delete</i>
+                </span>             
+              </div>                      
+            </li>
+          </ul>         
+          <button class="app-button" ng-click="removeSelectedNote()">Remove Selected</button>
+          <button class="app-button" ng-click="saveNotes()">Save Notes</button>
       </div>
-      <textarea class="sticky-content">
-        </textarea>
     </div>
-    <div id="createStickyBtn">+</div>
-  </main>
+  </div>
+</div>
             </div>
         </div>
     </div>
